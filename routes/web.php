@@ -6,13 +6,40 @@ use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomController;
+use App\Models\rooms;
+use App\Models\doctor;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::resource('doctors', DoctorController::class);
-Route::resource('rooms', RoomController::class);
+// doctors
+Route::get('doctors', [DoctorController::class, 'index'])->name('doctors.index');
+Route::get('doctors/create', function () {
+    $rooms = rooms::all();
+    return view('doctors.create', compact('rooms'));
+})->name('doctors.create');
+Route::post('doctors', [DoctorController::class, 'store'])->name('doctors.store');
+Route::get('doctors/{doctor}', [DoctorController::class, 'show'])->name('doctors.show');
+// Route::get('doctors/{doctor}/edit', [DoctorController::class, 'edit'])->name('doctors.edit');
+
+Route::get('doctors/{doctor}/edit', function (string $doctor) {
+    $rooms = rooms::all();
+    $doctor = Doctor::findOrFail($doctor);
+    return view('doctors.edit', compact('rooms', 'doctor'));
+})->name('doctors.edit');
+
+Route::put('doctors/{doctor}', [DoctorController::class, 'update'])->name('doctors.update');
+Route::delete('doctors/{doctor}', [DoctorController::class, 'destroy'])->name('doctors.destroy');
+
+// rooms
+Route::get('rooms', [RoomController::class, 'index'])->name('rooms.index');
+Route::get('rooms/create', [RoomController::class, 'create'])->name('rooms.create');
+Route::post('rooms', [RoomController::class, 'store'])->name('rooms.store');
+Route::get('rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
+Route::get('rooms/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
+Route::put('rooms/{room}', [RoomController::class, 'update'])->name('rooms.update');
+Route::delete('rooms/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
 
 // auth
 Route::get('login', function () {

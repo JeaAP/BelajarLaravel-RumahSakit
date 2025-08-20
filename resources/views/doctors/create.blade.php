@@ -56,18 +56,9 @@
       <select class="form-control" id="practice_location" name="practice_location"
       aria-describedby="practiceLocationHelp">
       <option value="" disabled selected>Pilih Lokasi Praktek</option>
-      <option value="Jatiwaringin">Jatiwaringin</option>
-      <option value="Cipayung">Cipayung</option>
-      <option value="Cilodong">Cilodong</option>
-      <option value="Cibubur">Cibubur</option>
-      <option value="Depok">Depok</option>
-      <option value="Lenteng Agung">Lenteng Agung</option>
-      <option value="Pancoran">Pancoran</option>
-      <option value="Lebak Bulus">Lebak Bulus</option>
-      <option value="Hutan">Hutan</option>
-      <option value="Rawa">Rawa</option>
-      <option value="Padang Pasir">Padang Pasir</option>
-      <option value="Amazon">Amazon</option>
+      @foreach($rooms as $room)
+        <option value="{{ $room->location }}">{{ $room->location }}</option>
+      @endforeach
       </select>
     </div>
 
