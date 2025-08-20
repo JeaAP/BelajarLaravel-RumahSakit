@@ -81,7 +81,7 @@
                             <a class="nav-link" href="#">Pasien</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Ruangan Rawat Inap</a>
+                            <a class="nav-link" href="{{ route('rooms.index') }}">Ruangan Rawat Inap</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">Pendaftaran</a>
@@ -181,7 +181,7 @@
     @endauth
 
     <!-- Font Awesome for icons -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://kit.fontawesome.com/8fad23d800.js" crossorigin="anonymous"></script>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"

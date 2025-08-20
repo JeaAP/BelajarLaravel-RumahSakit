@@ -5,12 +5,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoomController;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
 Route::resource('doctors', DoctorController::class);
+Route::resource('rooms', RoomController::class);
 
 // auth
 Route::get('login', function () {
