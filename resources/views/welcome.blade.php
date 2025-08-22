@@ -78,7 +78,7 @@
                             <a class="nav-link" href="{{ route('doctors.index') }}">Dokter</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Pasien</a>
+                            <a class="nav-link" href="{{ route('patients.index') }}">Pasien</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('rooms.index') }}">Ruangan Rawat Inap</a>
@@ -155,7 +155,7 @@
                                 </div>
                                 <h5 class="card-title">Ruangan Nyaman</h5>
                                 <p class="card-text">Fasilitas rawat inap dengan kenyamanan terbaik untuk pasien.</p>
-                                <a href="#" class="btn btn-primary">Lihat Ruangan</a>
+                                <a href="{{ route('rooms.index') }}" class="btn btn-primary">Lihat Ruangan</a>
                             </div>
                         </div>
                     </div>

@@ -6,6 +6,8 @@ use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\PatientController;
+use App\Models\patients;
 use App\Models\rooms;
 use App\Models\doctor;
 
@@ -33,13 +35,11 @@ Route::put('doctors/{doctor}', [DoctorController::class, 'update'])->name('docto
 Route::delete('doctors/{doctor}', [DoctorController::class, 'destroy'])->name('doctors.destroy');
 
 // rooms
-Route::get('rooms', [RoomController::class, 'index'])->name('rooms.index');
-Route::get('rooms/create', [RoomController::class, 'create'])->name('rooms.create');
-Route::post('rooms', [RoomController::class, 'store'])->name('rooms.store');
-Route::get('rooms/{room}', [RoomController::class, 'show'])->name('rooms.show');
-Route::get('rooms/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
-Route::put('rooms/{room}', [RoomController::class, 'update'])->name('rooms.update');
-Route::delete('rooms/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+Route::resource('rooms', RoomController::class);
+
+// patients
+Route::resource('patients', PatientController::class);
+Route::patch('/patients/{patient}/status', [PatientController::class, 'updateStatus'])->name('patients.updateStatus');
 
 // auth
 Route::get('login', function () {

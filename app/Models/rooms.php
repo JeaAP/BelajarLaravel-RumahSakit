@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Patients;
 
 class rooms extends Model
 {
@@ -29,6 +30,11 @@ class rooms extends Model
             get: fn ($value) => strtoupper($value),
             set: fn ($value) => ucwords($value),
         );
+    }
+
+    public function patients()
+    {
+        return $this->hasMany(Patients::class, 'room_number', 'room_id');
     }
 }
 
