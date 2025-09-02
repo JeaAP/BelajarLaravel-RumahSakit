@@ -10,31 +10,32 @@ class Patients extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
+        'user_id',
         'medical_record_number',
-        'patient_name',
-        'birth_date',
-        'gender',
-        'patient_address',
-        'patient_city',
         'patient_disease',
-        'doctor_id',
-        'admission_date',
-        'discharge_date',
-        'room_number',
-        'patient_status',
     ];
 
     public $timestamps = true;
 
     // Relasi ke Dokter
-    public function doctor()
+    public function user()
     {
-        return $this->belongsTo(Doctor::class, 'doctor_id');
+        return $this->belongsTo(User::class);
     }
 
-    // Relasi ke Room
-    public function room()
+    public function visits()
     {
-        return $this->belongsTo(Rooms::class, 'room_number', 'room_id');
+        return $this->hasMany(Visit::class);
+    }
+
+    public function diseaseRecords()
+    {
+        return $this->hasMany(DiseaseRecord::class);
+    }
+
+    public function patientDetail()
+    {
+        return $this->hasOne(PatientsDetails::class, 'patient_id', 'id');
     }
 }
+

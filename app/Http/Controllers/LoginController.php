@@ -21,16 +21,16 @@ class LoginController extends Controller
 
         $user = User::where('email', $email)->first();
 
-        if (!$user) {
-            return back()->withErrors(['email' => 'Email tidak terdaftar.'])->withInput();
+        if (!$user || !Hash::check($password, $user->password)) {
+            return back()->withErrors(['email' => 'Email atau password salah.'])->withInput();
         }
 
-        $blocked = session('login_blocked_' . $email);
-        if ($blocked && now()->lessThan($blocked)) {
-            return back()->withErrors(['email' => 'Akun Anda diblokir'])->withInput();
-        }
+        if (!$user || !Hash::check($password, $user->password)) {
+            $blocked = session('login_blocked_' . $email);
+            if ($blocked && now()->lessThan($blocked)) {
+                return back()->withErrors(['email' => 'Akun Anda diblokir'])->withInput();
+            }
 
-        if (!Auth::attempt(['email' => $email, 'password' => $password])) {
             $attempts = session()->get('login_attempts_' . $email, 0) + 1;
             session()->put('login_attempts_' . $email, $attempts);
 
@@ -43,10 +43,22 @@ class LoginController extends Controller
             return back()->withErrors(['password' => 'Password salah.'])->withInput();
         }
 
+        Auth::login($user);
+
         session()->forget('login_attempts_' . $email);
         session()->forget('login_blocked_' . $email);
 
-        return redirect()->route('home');
+        if ($user->role == 'user') {
+            return redirect()->route('home');
+        }
+
+        if ($user->role == 'operator') {
+            return redirect()->route('dashboard');
+        }
+
+        if ($user->role == 'doctor') {
+            return redirect()->route('doctor');
+        }
     }
 
     public function logout()

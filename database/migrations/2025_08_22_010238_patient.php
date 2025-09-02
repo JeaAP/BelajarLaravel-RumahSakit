@@ -12,23 +12,29 @@ return new class extends Migration {
     {
         Schema::create('patients', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
             $table->string('medical_record_number')->unique();
-            $table->string('patient_name');
-            $table->date('birth_date');
-            $table->enum('gender', ['male', 'female']);
-            $table->string('patient_address');
-            $table->string('patient_city');
-            $table->integer('patient_age')->virtualAs('YEAR(CURDATE()) - YEAR(birth_date)');
             $table->string('patient_disease');
-            $table->unsignedBigInteger('doctor_id');
-            $table->date('admission_date');
-            $table->date('discharge_date')->nullable()->after('admission_date');
-            $table->string('room_number');
-            $table->enum('patient_status', ['dirawat', 'pulang'])->default('dirawat');
-            
-            $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
-            $table->foreign('room_number')->references('room_id')->on('rooms');
             $table->timestamps();
+
+            // Foreign key constraints
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+        });
+
+        Schema::create('patients_details', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('patient_id');
+            $table->string('emergency_contact')->nullable();
+            $table->string('insurance_info')->nullable();
+            $table->string('phone_number')->nullable();
+            $table->text('address')->nullable();
+            $table->string('city')->nullable();
+            $table->date('birth_date')->nullable();
+            $table->enum('gender', ['male', 'female'])->nullable();
+            $table->timestamps();
+
+            // Foreign key constraints
+            $table->foreign('patient_id')->references('id')->on('patients')->onDelete('cascade');
         });
     }
 
@@ -37,6 +43,12 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::table('patients_details', function (Blueprint $table) {
+            $table->dropForeign('patients_details_patient_id_foreign');
+        });
+
+        Schema::dropIfExists('patients_details');
         Schema::dropIfExists('patients');
     }
 };
+

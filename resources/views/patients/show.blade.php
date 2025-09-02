@@ -33,10 +33,6 @@
           <p class="card-text">{{ $patient->patient_disease }}</p>
         </div>
         <div class="d-flex justify-content-between">
-          <p class="card-text"><strong>Dokter Penanggung Jawab:</strong></p>
-          <p class="card-text">{{ $patient->doctor->name ?? '-' }}</p>
-        </div>
-        <div class="d-flex justify-content-between">
           <p class="card-text"><strong>Tanggal Masuk:</strong></p>
           <p class="card-text">{{ $patient->admission_date }}</p>
         </div>

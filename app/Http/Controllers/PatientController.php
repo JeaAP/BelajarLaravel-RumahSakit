@@ -3,167 +3,158 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Patients;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 use App\Models\Doctor;
-use App\Models\Rooms;
+use App\Models\Patients;
+use App\Models\PatientsDetails;
 
 class PatientController extends Controller
 {
-
-    public function index(Request $request)
+    public function index()
     {
-        $status = $request->input('status');
-
-        $query = Patients::latest();
-
-        if ($status) {
-            $query->where('patient_status', $status);
-        }
-
-        $patients = $query->paginate(5);
-
-        return view('patients.index', compact('patients'))
-            ->with('i', (request()->input('page', 1) - 1) * 5);
+        $patients = Patients::with(['user', 'doctor', 'patientDetail'])->get();
+        return view('patients.index', compact('patients'));
     }
 
     public function create()
     {
-        $doctors = Doctor::select('id', 'name', 'specialization')->get();
-        $rooms = Rooms::all();
-        return view('patients.create', compact('doctors', 'rooms'));
+        $doctors = Doctor::with('user')->get();
+        return view('patients.create', compact('doctors'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $userData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $patientData = $request->validate([
+            'doctor_id' => 'nullable|exists:doctors,id',
             'medical_record_number' => 'required|string|unique:patients',
-            'patient_name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'gender' => 'required|in:male,female',
-            'patient_address' => 'required|string|max:255',
-            'patient_city' => 'required|string|max:255',
-            'doctor_id' => 'required|exists:doctors,id',
-            'admission_date' => 'required|date',
-            'room_number' => 'required|exists:rooms,room_id',
+            'patient_disease' => 'required|string|max:255',
         ]);
 
-        $room = Rooms::where('room_id', $request->room_number)->first();
-        if ($room->capacity <= 0) {
-            return back()->withErrors(['room_number' => 'Kamar penuh, tidak bisa menambah pasien!']);
+        $patientDetailData = $request->validate([
+            'emergency_contact' => 'nullable|string|max:255',
+            'insurance_info' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:male,female',
+        ]);
+
+        try {
+            $user = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password']),
+                'role' => 'user',
+            ]);
+
+            $patient = Patients::create(array_merge($patientData, [
+                'user_id' => $user->id,
+            ]));
+
+            PatientsDetails::create(array_merge($patientDetailData, [
+                'patient_id' => $patient->id,
+            ]));
+
+            return redirect()->route('patients.index')->with('success', 'Data pasien berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            if (isset($user)) {
+                $user->delete();
+            }
+
+            return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
-
-        $doctor = Doctor::find($request->doctor_id);
-
-        Patients::create([
-            'medical_record_number' => $request->medical_record_number,
-            'patient_name' => $request->patient_name,
-            'birth_date' => $request->birth_date,
-            'gender' => $request->gender,
-            'patient_address' => $request->patient_address,
-            'patient_city' => $request->patient_city,
-            'patient_disease' => $doctor->specialization,
-            'doctor_id' => $request->doctor_id,
-            'admission_date' => $request->admission_date,
-            'room_number' => $request->room_number,
-            'patient_status' => 'dirawat',
-        ]);
-
-        $room->capacity -= 1;
-        $room->save();
-
-        return redirect()->route('patients.index')->with('success', 'Data pasien berhasil ditambahkan.');
     }
 
     public function show(Patients $patient)
     {
+        $patient->load(['user', 'doctor.user', 'patientDetail']);
         return view('patients.show', compact('patient'));
     }
 
     public function edit(Patients $patient)
     {
-        $doctors = Doctor::all();
-        $rooms = Rooms::all();
-        return view('patients.edit', compact('patient', 'doctors', 'rooms'));
+        $patient->load(['user', 'doctor', 'patientDetail']);
+        $doctors = Doctor::with('user')->get();
+        return view('patients.edit', compact('patient', 'doctors'));
     }
 
     public function update(Request $request, Patients $patient)
     {
-        $request->validate([
-            'patient_name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'gender' => 'required|in:male,female',
-            'patient_address' => 'required|string|max:255',
-            'patient_city' => 'required|string|max:255',
-            'doctor_id' => 'required|exists:doctors,id',
-            'admission_date' => 'required|date',
-            'discharge_date' => 'nullable|date|after_or_equal:admission_date',
-            'room_number' => 'required|exists:rooms,room_id',
-            'patient_status' => 'required|in:dirawat,pulang',
-        ]);
+        $userValidationRules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $patient->user_id,
+        ];
 
-        $doctor = Doctor::find($request->doctor_id);
-        $oldStatus = $patient->patient_status;
-
-        $status = $request->patient_status;
-        $dischargeDate = $request->discharge_date;
-
-        if ($status === 'pulang' && !$dischargeDate) {
-            $dischargeDate = date('Y-m-d');
+        if ($request->filled('password')) {
+            $userValidationRules['password'] = 'min:8|confirmed';
         }
 
-        if ($dischargeDate && $dischargeDate == date('Y-m-d')) {
-            $status = 'pulang';
-        }
+        $userData = $request->validate($userValidationRules);
 
-        $patient->update([
-            'patient_name' => $request->patient_name,
-            'birth_date' => $request->birth_date,
-            'gender' => $request->gender,
-            'patient_address' => $request->patient_address,
-            'patient_city' => $request->patient_city,
-            'patient_disease' => $doctor->specialization,
-            'doctor_id' => $request->doctor_id,
-            'admission_date' => $request->admission_date,
-            'discharge_date' => $dischargeDate,
-            'room_number' => $request->room_number,
-            'patient_status' => $status,
+        $patientData = $request->validate([
+            'doctor_id' => 'nullable|exists:doctors,id',
+            'medical_record_number' => 'required|string|unique:patients,medical_record_number,' . $patient->id,
+            'patient_disease' => 'required|string|max:255',
         ]);
 
-        if ($oldStatus !== 'pulang' && $status === 'pulang') {
-            $room = Rooms::where('room_id', $request->room_number)->first();
-            if ($room) {
-                $room->capacity += 1;
-                $room->save();
+        $patientDetailData = $request->validate([
+            'emergency_contact' => 'nullable|string|max:255',
+            'insurance_info' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:male,female',
+        ]);
+
+        try {
+            $userUpdateData = [
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+            ];
+
+            if ($request->filled('password')) {
+                $userUpdateData['password'] = Hash::make($userData['password']);
             }
-        }
 
-        return redirect()->route('patients.index')->with('success', 'Data pasien berhasil diperbarui.');
+            $patient->user->update($userUpdateData);
+
+            $patient->update($patientData);
+
+            if ($patient->patientDetail) {
+                $patient->patientDetail->update($patientDetailData);
+            } else {
+                PatientsDetails::create(array_merge($patientDetailData, [
+                    'patient_id' => $patient->id,
+                ]));
+            }
+
+            return redirect()->route('patients.index')->with('success', 'Data pasien berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
     }
 
     public function destroy(Patients $patient)
     {
-        $patient->delete();
-        return redirect()->route('patients.index')->with('success', 'Data pasien berhasil dihapus.');
-    }
-
-    public function updateStatus(Patients $patient)
-    {
-        if ($patient->patient_status !== 'pulang') {
-            $dischargeDate = date('Y-m-d');
-
-            $patient->update([
-                'patient_status' => 'pulang',
-                'discharge_date' => $dischargeDate,
-            ]);
-
-            $room = Rooms::where('room_id', $patient->room_number)->first();
-            if ($room) {
-                $room->capacity += 1;
-                $room->save();
+        try {
+            if ($patient->user) {
+                $patient->user->delete();
             }
+
+            $patient->delete();
+
+            return redirect()->route('patients.index')->with('success', 'Data pasien berhasil dihapus.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
-
-        return redirect()->route('patients.index')->with('success', 'Status pasien berhasil diubah menjadi pulang.');
     }
-
 }

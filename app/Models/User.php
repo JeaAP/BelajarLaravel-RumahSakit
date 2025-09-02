@@ -25,21 +25,26 @@ class User extends Authenticatable
         'profile_picture',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    // Relasi
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class);
+    }
+
+    public function patient()
+    {
+        return $this->hasOne(Patients::class);
+    }
+
     protected function casts(): array
     {
         return [

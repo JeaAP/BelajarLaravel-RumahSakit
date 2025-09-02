@@ -4,94 +4,132 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use App\Models\User;
 use App\Models\Doctor;
 
 class DoctorController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $doctors = Doctor::latest()->paginate(5);
-        return view('doctors.index', compact('doctors'))->with('i', (request()->input('page', 1) - 1) * 5);
-
+        $doctors = Doctor::with('user')->get();
+        return view('doctors.index', compact('doctors'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        return view('doctors.create')->with('message', 'Tambah data dokter');
+        return view('doctors.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'id_number' => 'required|string|unique:doctors',
+        $userData = $request->validate([
             'name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'specialization' => 'required|string|max:255',
-            'practice_location' => 'required|string|max:255',
-            'practice_hours' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
-        Doctor::create($request->all());
+        $doctorData = $request->validate([
+            'id_number' => 'required|string|unique:doctors',
+            'specialization' => 'required|string|max:255',
+            'practice_location' => 'nullable|string|max:255',
+            'practice_hours' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:male,female',
+        ]);
 
-        return redirect()->route('doctors.index')->with('success', 'Data dokter berhasil ditambahkan.');
+        try {
+            $user = User::create([
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'password' => Hash::make($userData['password']),
+            ]);
+
+            $doctor = Doctor::create(array_merge($doctorData, [
+                'user_id' => $user->id
+            ]));
+
+            return redirect()->route('doctors.index')->with('success', 'Data dokter berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            if (isset($user)) {
+                $user->delete();
+            }
+
+            return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Doctor $doctor)
     {
+        $doctor->load('user');
         return view('doctors.show', compact('doctor'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Doctor $doctor)
     {
-        return view('doctors.edit', compact('doctor'))->with('message', 'Edit data dokter');
+        $doctor->load('user');
+        return view('doctors.edit', compact('doctor'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Doctor $doctor)
     {
-        $request->validate([
-            'id_number' => 'required|string',
+        $userValidationRules = [
             'name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'specialization' => 'required|string|max:255',
-            'practice_location' => 'required|string|max:255',
-            'practice_hours' => 'required|string|max:255',
-        ]);
+            'email' => 'required|email|unique:users,email,' . $doctor->user_id,
+        ];
 
-        if($doctor->id_number !== $request->id_number) {
-            $request->validate(['id_number' => 'unique:doctors']);
+        if ($request->filled('password')) {
+            $userValidationRules['password'] = 'min:8|confirmed';
         }
 
-        $doctor->update($request->all());
+        $userData = $request->validate($userValidationRules);
 
-        return redirect()->route('doctors.index')->with('success', 'Data dokter berhasil diperbarui.');
+        $doctorData = $request->validate([
+            'id_number' => 'required|string|unique:doctors,id_number,' . $doctor->id,
+            'specialization' => 'required|string|max:255',
+            'practice_location' => 'nullable|string|max:255',
+            'practice_hours' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+            'gender' => 'nullable|in:male,female',
+        ]);
+
+        try {
+            $userUpdateData = [
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+            ];
+
+            if ($request->filled('password')) {
+                $userUpdateData['password'] = Hash::make($userData['password']);
+            }
+
+            $doctor->user->update($userUpdateData);
+
+            $doctor->update($doctorData);
+
+            return redirect()->route('doctors.index')->with('success', 'Data dokter berhasil diperbarui.');
+        } catch (\Exception $e) {
+            return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Doctor $doctor)
     {
-        $doctor->delete();
+        try {
+            if ($doctor->user) {
+                $doctor->user->delete();
+            }
 
-        return redirect()->route('doctors.index')->with('success', 'Data dokter berhasil dihapus.');
+            $doctor->delete();
+
+            return redirect()->route('doctors.index')->with('success', 'Data dokter berhasil dihapus.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
     }
 }

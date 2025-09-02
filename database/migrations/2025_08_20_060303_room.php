@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('room_name');
             $table->integer('capacity');
             $table->string('location');
+            $table->enum('status', ['available', 'occupied', 'maintenance'])->default('available');
             $table->timestamps();
         });
     }
