@@ -322,7 +322,6 @@
                       <td class="text-center">{{ \Carbon\Carbon::parse($visit->requested_date)->format('d M Y') . ' - ' . \Carbon\Carbon::parse($visit->requested_time)->format('H:i') }}</td>
                       <td><span class="status-badge status-approved">{{ $visit->status }}</span></td>
                       <td class="text-center">
-                        <button class="btn btn-sm btn-primary action-btn"><i class="fas fa-eye"></i></button>
                         <a href="{{ route('examinations.create', $visit->id) }}" class="btn btn-sm btn-success action-btn"><i class="fas fa-edit"></i></a>
                       </td>
                     </tr>

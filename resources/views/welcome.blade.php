@@ -304,8 +304,10 @@
                                                 <span class="badge rounded-pill bg-warning">Menunggu</span>
                                             @elseif($visit->status == 'approved')
                                                 <span class="badge rounded-pill bg-success">Disetujui</span>
-                                            @elseif($visit->status == 'rejected')
+                                            @elseif($visit->status == 'cancelled')
                                                 <span class="badge rounded-pill bg-danger">Dibatalkan</span>
+                                            @elseif($visit->status == 'rejected')
+                                                <span class="badge rounded-pill bg-danger">Ditolak</span>
                                             @else
                                                 <span class="badge rounded-pill bg-info">{{ $visit->status }}</span>
                                             @endif
@@ -317,7 +319,8 @@
                                                 data-time="{{ \Carbon\Carbon::parse($visit->requested_time)->format('H:i') }}"
                                                 data-treatment="{{ $visit->treatment_request }}"
                                                 data-doc="{{ $visit->doctor ? $visit->doctor->user->name : 'Belum ada dokter' }}"
-                                                data-status="{{ $visit->status }}" data-id="{{ $visit->id }}">
+                                                data-status="{{ $visit->status }}" data-id="{{ $visit->id }}"
+                                                data-examination-id="{{ $visit->examination ? $visit->examination->id : '' }}">
                                                 <i class="fas fa-eye"></i>
                                             </button>
                                         </td>
@@ -365,6 +368,7 @@
                         <div class="col-md-9">
                             <span id="modal-status"></span>
                         </div>
+                        <div class="detail-examinations"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -415,17 +419,20 @@
             const treatment = button.getAttribute('data-treatment');
             const status = button.getAttribute('data-status');
             const visitId = button.getAttribute('data-id');
+            const examinationId = button.getAttribute('data-examination-id');
+            const doc = button.getAttribute('data-doc');
 
             document.getElementById('modal-complaint').textContent = complaint;
             document.getElementById('modal-date').textContent = date;
             document.getElementById('modal-time').textContent = time;
             document.getElementById('modal-treatment').textContent = treatment;
+            document.getElementById('modal-doc').textContent = doc;
 
             const statusElement = document.getElementById('modal-status');
             let badgeClass = '';
             let statusText = '';
 
-            switch (status) {
+            switch (status.toLowerCase().trim()) {
                 case 'pending':
                     badgeClass = 'bg-warning';
                     statusText = 'Menunggu';
@@ -436,8 +443,11 @@
                     break;
                 case 'rejected':
                     badgeClass = 'bg-danger';
-                    statusText = 'Dibatalkan';
+                    statusText = 'Ditolak';
                     break;
+                case 'cancelled':
+                    badgeClass = 'bg-danger';
+                    statusText = 'Dibatalkan';
                 default:
                     badgeClass = 'bg-info';
                     statusText = status;
@@ -460,6 +470,21 @@
         `;
             } else {
                 actions.innerHTML = '';
+            }
+
+            if (status === 'completed' && examinationId) {
+                const detailExaminations = document.querySelector('.detail-examinations');
+                detailExaminations.innerHTML = `
+                    <div class="row visit-detail-row mt-3">
+                        <div class="col-md-3 detail-label">Riwayat Pemeriksaan:</div>
+                        <div class="col-md-9">
+                            <a href="/examinations/${examinationId}" class="btn btn-sm btn-outline-primary">Lihat</a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const detailExaminations = document.querySelector('.detail-examinations');
+                detailExaminations.innerHTML = '';
             }
         });
     </script>

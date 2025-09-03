@@ -118,9 +118,9 @@
                           <i class="bi bi-eye"></i>
                         </button>
 
-                        <a href="{{ route('visits.edit', $visit->id) }}" class="btn btn-warning btn-sm" title="Edit">
+                        <!-- <a href="{{ route('visits.edit', $visit->id) }}" class="btn btn-warning btn-sm" title="Edit">
                           <i class="bi bi-pencil-square"></i>
-                        </a>
+                        </a> -->
 
                         <form action="{{ route('visits.destroy', $visit->id) }}" method="POST" class="d-inline">
                           @csrf
@@ -274,9 +274,9 @@
             @endif
           </div>
           <div class="modal-footer">
-            <a href="{{ route('visits.edit', $visit->id) }}" class="btn btn-warning">
+            <!-- <a href="{{ route('visits.edit', $visit->id) }}" class="btn btn-warning">
               <i class="bi bi-pencil-square me-1"></i> Edit Lengkap
-            </a>
+            </a> -->
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
               <i class="bi bi-x-circle me-1"></i> Tutup
             </button>

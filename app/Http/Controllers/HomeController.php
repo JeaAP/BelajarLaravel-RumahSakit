@@ -17,25 +17,39 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $patient = Patients::where('user_id', auth()->user()->id)->first();
         $allDoctors = Doctor::with('user')->get();
         $totalDoctors = Doctor::count();
         $totalPatients = Patients::count();
         $totalRooms = Rooms::count();
-        $visits = Visit::selectRaw('*, DATE(requested_date) as requested_date, TIME(requested_time) as requested_time')
-            ->where('patient_id', Patients::where('user_id', auth()->user()->id)->value('id'))
-            ->orderBy('status', 'asc')
-            ->orderBy('requested_date', 'desc')
-            ->orderBy('requested_time', 'desc')
-            ->get();
+
+        if (Auth::check()) {
+            $patient = Patients::where('user_id', auth()->user()->id)->first();
+
+            $visits = Visit::with(['doctor.user', 'examination'])
+                ->selectRaw('*, DATE(requested_date) as requested_date, TIME(requested_time) as requested_time')
+                ->where('patient_id', $patient->id)
+                ->orderBy('status', 'asc')
+                ->orderBy('requested_date', 'desc')
+                ->orderBy('requested_time', 'desc')
+                ->get();
+
+            return view('welcome', compact(
+                'allDoctors',
+                'totalDoctors',
+                'totalPatients',
+                'totalRooms',
+                'patient',
+                'visits'
+            ));
+        } else {
+            $patient = null;
+        }
 
         return view('welcome', compact(
             'allDoctors',
             'totalDoctors',
             'totalPatients',
             'totalRooms',
-            'visits',
-            'patient'
         ));
     }
 

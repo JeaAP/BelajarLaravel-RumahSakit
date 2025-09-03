@@ -5,12 +5,18 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0"><i class="bi bi-file-medical me-2"></i>Detail Pemeriksaan</h2>
       <div>
-        <a href="{{ route('examinations.index') }}" class="btn btn-outline-secondary me-2">
-          <i class="bi bi-arrow-left me-1"></i>Kembali
-        </a>
-        <a href="{{ route('examinations.edit', $examination) }}" class="btn btn-primary">
-          <i class="bi bi-pencil me-1"></i>Edit
-        </a>
+        @if(Auth::user()->role == 'user')
+          <a href="{{ route('home') }}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left me-1"></i>Kembali
+          </a>
+        @elseif(Auth::user()->role != 'user')
+          <a href="{{ route('examinations.index') }}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left me-1"></i>Kembali
+          </a>
+          <a href="{{ route('examinations.edit', $examination) }}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </a>
+        @endif
       </div>
     </div>
 
@@ -37,21 +43,21 @@
           <div class="col-md-6">
             <div class="mb-3">
               <strong>Nama Pasien</strong>
-              <p class="mb-0">{{ $examination->visit->patient->user->name ?? 'Nama tidak tersedia' }}</p>
+              <p class="mb-0">{{ $visits->patient->user->name ?? 'Nama tidak tersedia' }}</p>
             </div>
             <div class="mb-3">
               <strong>Keluhan Awal</strong>
-              <p class="mb-0">{{ $examination->visit->complaint }}</p>
+              <p class="mb-0">{{ $visits->complaint }}</p>
             </div>
             <div class="mb-3">
               <strong>Tanggal Kunjungan</strong>
-              <p class="mb-0">{{ \Carbon\Carbon::parse($examination->visit->requested_date)->format('d M Y') }}</p>
+              <p class="mb-0">{{ \Carbon\Carbon::parse($visits->requested_date)->format('d M Y') }}</p>
             </div>
           </div>
           <div class="col-md-6">
             <div class="mb-3">
               <strong>Waktu Kunjungan</strong>
-              <p class="mb-0">{{ \Carbon\Carbon::parse($examination->visit->requested_time)->format('H:i') }}</p>
+              <p class="mb-0">{{ \Carbon\Carbon::parse($visits->requested_time)->format('H:i') }}</p>
             </div>
             <div class="mb-3">
               <strong>Dokter Pemeriksa</strong>

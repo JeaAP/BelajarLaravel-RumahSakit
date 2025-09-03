@@ -212,7 +212,7 @@
                 <label class="form-check-label" for="actionComplete">Selesaikan Pemeriksaan</label>
               </div>
               <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="action" id="actionCancel" value="cancel">
+                <input class="form-check-input" type="radio" name="action" id="actionCancel" value="rejected">
                 <label class="form-check-label" for="actionCancel">Batalkan Kunjungan</label>
               </div>
             </div>

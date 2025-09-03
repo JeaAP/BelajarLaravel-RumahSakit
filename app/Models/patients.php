@@ -37,5 +37,10 @@ class Patients extends Model
     {
         return $this->hasOne(PatientsDetails::class, 'patient_id', 'id');
     }
+
+    public function doctor()
+    {
+        return $this->hasOne(Doctor::class, 'user_id', 'user_id');
+    }
 }
 

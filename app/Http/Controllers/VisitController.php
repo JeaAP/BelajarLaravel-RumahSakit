@@ -75,7 +75,7 @@ class VisitController extends Controller
             'cancellation_reason' => $request->cancellation_reason,
         ]);
 
-        return redirect()->route('visits.index')->with('success', 'Data kunjungan berhasil diperbarui.');
+        return back()->with('success', 'Data kunjungan berhasil diperbarui.');
     }
 
     public function destroy(Visit $visit)

@@ -61,7 +61,7 @@ class ExaminationController extends Controller
 
         if ($request->action === 'cancel') {
             $visit->update([
-                'status' => 'cancelled',
+                'status' => 'rejected',
                 'cancellation_reason' => $request->cancellation_reason,
             ]);
 
@@ -113,17 +113,24 @@ class ExaminationController extends Controller
 
     public function show(Examination $examination)
     {
-        $doctor = Doctor::where('user_id', auth()->id())->first();
+        if (Auth::user()->role === 'patient') {
+            if ($examination->visit->patient_id !== auth()->id()) {
+                return redirect()->route('examinations.index')->with('error', 'Anda tidak memiliki akses ke pemeriksaan ini.');
+            }
+        } elseif (Auth::user()->role === 'doctor') {
+            $doctor = Doctor::where('user_id', auth()->id())->first();
 
-        if ($examination->doctor_id !== $doctor->id) {
-            return redirect()->route('examinations.index')->with('error', 'Anda tidak memiliki akses ke pemeriksaan ini.');
+            if (!$doctor || $examination->doctor_id !== $doctor->id) {
+                return redirect()->route('examinations.index')->with('error', 'Anda tidak memiliki akses ke pemeriksaan ini.');
+            }
         }
 
+        $visits = Visit::where('id', $examination->visit_id)->first();
         $examination->load(['visit.patient.user', 'doctor.user', 'room']);
         $diseaseRecord = diseaserecord::where('patient_id', $examination->visit->patient_id)
             ->first();
 
-        return view('examinations.show', compact('examination', 'diseaseRecord'));
+        return view('examinations.show', compact('visits', 'examination', 'diseaseRecord'));
     }
 
     public function edit(Examination $examination)
